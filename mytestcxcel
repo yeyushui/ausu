@@ -1,0 +1,82 @@
+<?php
+
+error_reporting(E_ALL);
+ini_set('display_errors', TRUE);
+ini_set('display_startup_errors', TRUE);
+date_default_timezone_set('Europe/London');
+require_once './PHPExcel.php';
+if (PHP_SAPI == 'cli')
+    die('This example should only be run from a Web Browser');
+
+class excel
+{
+
+    private $objPHPExcel;
+    function __construct($list,$field,$wid)
+    {
+        $this->objPHPExcel = new PHPExcel();
+        $this->daochu()->data($list,$field,$wid)->out();
+    }
+
+    private function daochu()
+    {
+
+        $this->objPHPExcel->getProperties()->setCreator("Maarten Balliauw")
+                             ->setLastModifiedBy("Maarten Balliauw")
+                             ->setTitle("Office 2007 XLSX Test Document")
+                             ->setSubject("Office 2007 XLSX Test Document")
+                             ->setDescription("Test document for Office 2007 XLSX, generated using PHP classes.")
+                             ->setKeywords("office 2007 openxml php")
+                             ->setCategory("Test result file");
+        return $this;
+    }
+
+    private function data($arr,$field,$a)
+    {
+
+        if (!is_array($arr)) {
+            exit('不是一个数组');
+        }
+        $array = array_merge($field,$arr);
+        $test = array();
+        foreach ($array as $k => $v) {
+            $li = 0;
+            foreach ($v as $y => $e) {
+                $array[$k][$li] = $e;
+                unset($array[$k][$y]);
+                $li++;
+            }
+
+        }
+
+        $i=1;
+        foreach ($array as $key => $value) {
+            for ($l=0,$char='A'; $l<count($array[0]);$char++,$l++) {
+                if ($key == 0) {
+                    $this->objPHPExcel->getActiveSheet()->getColumnDimension($char)->setWidth(empty($a[$l])?10:$a[$l]);
+                }
+                    $this->objPHPExcel->setActiveSheetIndex(0)->setCellValue((string)$char.$i, ' '.(string)$value[$l]);
+            }
+            $i++;
+        }
+        $this->objPHPExcel->getActiveSheet()->setTitle('小众');
+        $this->objPHPExcel->setActiveSheetIndex(0);
+        return $this;
+    }
+
+    private function out()
+    {
+        $time = time();
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header("Content-Disposition: attachment;filename='XZ{$time}.xlsx'");
+        header('Cache-Control: max-age=0');
+        header('Cache-Control: max-age=1');
+        header ('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+        header ('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT');
+        header ('Cache-Control: cache, must-revalidate');
+        header ('Pragma: public');
+        $objWriter = PHPExcel_IOFactory::createWriter($this->objPHPExcel, 'Excel2007');
+        $objWriter->save('php://output');
+    }
+
+}
